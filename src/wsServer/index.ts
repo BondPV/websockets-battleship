@@ -3,6 +3,7 @@ import { logMessage, LogTypeEnum, parseClientRequest } from './utils';
 import { handlePlayerRegistration } from './controllers/playerController';
 import { ClientRequestType } from './types';
 import { COMMANDS } from './constants';
+import { handleAddUserToRoom, handleCreateRoom } from './controllers/roomController';
 
 export const createWebSocketServer = (port: number) => {
     const wss = new WebSocketServer({ port });
@@ -13,10 +14,17 @@ export const createWebSocketServer = (port: number) => {
         ws.on('message', (message: string) => {
             try {
                 const { type, data }: ClientRequestType = parseClientRequest(message.toString());
+                console.log(data);
 
                 switch (type) {
                     case COMMANDS.reg:
                         handlePlayerRegistration(data, ws);
+                        break;
+                    case COMMANDS.createRoom:
+                        handleCreateRoom(ws);
+                        break;
+                    case COMMANDS.addUserToRoom:
+                        handleAddUserToRoom(data, ws);
                         break;
                     default:
                         logMessage(LogTypeEnum.warning, `Unknown message type: ${type}`);

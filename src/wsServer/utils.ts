@@ -16,10 +16,11 @@ export const logMessage = (type: LogTypeEnum, message: string, object?: unknown)
 
 export const parseClientRequest = (message: string): ClientRequestType => {
     const { type, data } = JSON.parse(message.toString());
+    console.log(type, data);
 
     return {
         type,
-        data: JSON.parse(data),
+        data: data ? JSON.parse(data) : '',
         id: 0,
     };
 };
@@ -33,4 +34,10 @@ export const serializeServerResponse = (type: CommandType, data: unknown): strin
 
 export const sendResponse = (ws: WebSocket, command: CommandType, data: unknown) => {
     ws.send(serializeServerResponse(command, data));
+};
+
+export const generateID = (prefix = '') => {
+    const hash = Math.random().toString(36).slice(-7);
+
+    return `${prefix}-${hash}`;
 };
