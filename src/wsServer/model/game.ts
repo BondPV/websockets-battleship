@@ -1,3 +1,4 @@
+import { PositionType, ShipInfoType } from '../types';
 import { generateID } from '../utils';
 
 type PlayerIdType = string;
@@ -6,20 +7,7 @@ type GameIdType = string;
 const GAME_PLAYERS_COUNT = 2;
 const GAME_FIELD_SIZE = 10;
 
-type PositionType = {
-    x: number;
-    y: number;
-};
 type CellStatusType = 'empty' | 'ship' | 'hit';
-
-type ShipSizeType = 'small' | 'medium' | 'large' | 'huge';
-
-type ShipInfoType = {
-    position: PositionType;
-    direction: boolean;
-    length: number;
-    type: ShipSizeType;
-};
 
 type CellInfoType = {
     isAttacked: boolean;
@@ -37,7 +25,7 @@ type PlayerStateType = {
 
 type PlayersStateDataType = Map<PlayerIdType, PlayerStateType>;
 
-type GameStateType = {
+export type GameStateType = {
     gameId: GameIdType;
     playersStateData: PlayersStateDataType;
     playersQueue: PlayerIdType[];

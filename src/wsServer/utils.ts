@@ -16,7 +16,6 @@ export const logMessage = (type: LogTypeEnum, message: string, object?: unknown)
 
 export const parseClientRequest = (message: string): ClientRequestType => {
     const { type, data } = JSON.parse(message.toString());
-    console.log(type, data);
 
     return {
         type,

@@ -19,3 +19,22 @@ export type PlayerResponseDataType = {
     error: boolean;
     errorText: string;
 };
+
+export type PositionType = {
+    x: number;
+    y: number;
+};
+
+export type ShipSizeType = 'small' | 'medium' | 'large' | 'huge';
+
+export type ShipInfoType = {
+    position: PositionType;
+    direction: boolean;
+    length: number;
+    type: ShipSizeType;
+};
+
+export type StartGameResponseDataType = {
+    ships: ShipInfoType[];
+    currentPlayerIndex: string;
+};

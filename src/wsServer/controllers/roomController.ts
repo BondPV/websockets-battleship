@@ -34,22 +34,23 @@ export const handleCreateRoom = (ws: WebSocket) => {
     const roomId = generateID('room');
 
     const newRoom: RoomType = {
-        id: roomId,
+        roomId,
         creator: player.id,
         players: [player],
     };
 
     roomsDataBase.set(roomId, newRoom);
 
+    updateRoom();
     sendResponse(ws, COMMANDS.createGame, {
-        idGame: newRoom.id,
+        idGame: newRoom.roomId,
         idPlayer: newRoom.creator,
     });
 };
 
 export const updateRoom = (ws?: WebSocket): void => {
-    const responseData = [...roomsDataBase.values()].map(({ id, players }) => ({
-        id,
+    const responseData = [...roomsDataBase.values()].map(({ roomId, players }) => ({
+        roomId,
         roomUsers: players.map(({ name, id }) => ({ name, index: id })),
     }));
 
@@ -63,7 +64,7 @@ export const updateRoom = (ws?: WebSocket): void => {
 const deleteRoomsCreatedByPlayer = (playerId: string): void => {
     roomsDataBase.forEach(room => {
         if (room.creator === playerId) {
-            roomsDataBase.delete(room.id);
+            roomsDataBase.delete(room.roomId);
         }
     });
 };
