@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { COMMANDS } from '../constants';
 import { GameIdType, gamesDataBase, PlayerIdType } from '../db/db';
 import { addShips, getPlayerInTurn, isGameReady } from '../model/game';

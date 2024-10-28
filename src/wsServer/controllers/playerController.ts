@@ -10,6 +10,43 @@ const isFieldValid = (fieldContent: string): boolean => {
     return fieldContent.length >= MIN_LOGIN_FIELDS_LENGTH;
 };
 
+const findPlayerByName = (name: string): PlayerRegDataType | null => {
+    for (const player of playersDataBase.values()) {
+        if (player.name === name) {
+            return player;
+        }
+    }
+
+    return null;
+};
+
+const handlePlayerLogin = (player: PlayerRegDataType, password: string, ws: WebSocket) => {
+    const hashedPassword = createHash('sha256').update(password).digest('hex');
+    const { id, name, password: playerPassword } = player;
+
+    if (hashedPassword !== playerPassword) {
+        sendResponse(ws, COMMANDS.reg, {
+            name,
+            index: 0,
+            error: true,
+            errorText: 'Invalid password',
+        });
+
+        return;
+    }
+
+    onlinePlayersDataBase.set(id, { id, name, ws });
+
+    sendResponse(ws, COMMANDS.reg, {
+        name,
+        index: id,
+        error: false,
+        errorText: '',
+    });
+
+    updateRoom(ws);
+};
+
 export const handlePlayerRegistration = (data: unknown, ws: WebSocket) => {
     const { name, password } = data as PlayerRequestDataType;
 
@@ -21,15 +58,11 @@ export const handlePlayerRegistration = (data: unknown, ws: WebSocket) => {
         return;
     }
 
-    const player = playersDataBase.has(name);
+    const player = findPlayerByName(name);
 
     if (player) {
-        sendResponse(ws, COMMANDS.reg, {
-            name,
-            index: 0,
-            error: true,
-            errorText: 'Player already exists',
-        });
+        handlePlayerLogin(player, password, ws);
+
         return;
     }
 
