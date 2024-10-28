@@ -1,21 +1,21 @@
 import { WebSocket } from 'ws';
-import { OnlinePlayerDataType, onlinePlayersDataBase, roomsDataBase, RoomType } from '../db/db';
-import { generateID, sendResponse } from '../utils';
+import { onlinePlayersDataBase, roomsDataBase, RoomType } from '../db/db';
+import { findPlayerByWebSocket, generateID, logMessage, LogTypeEnum, sendResponse } from '../utils';
 import { COMMANDS } from '../constants';
-import { createGame } from '../model/game';
+import { handleCreateGame } from './gameController';
 
 type AddUserToRoomDataType = {
     indexRoom: string;
 };
 
-const findPlayerByWebSocket = (ws: WebSocket): OnlinePlayerDataType | null => {
-    for (const player of onlinePlayersDataBase.values()) {
-        if (player.ws === ws) {
-            return player;
+export const isPlayerAlreadyCreatedRoom = (playerId: string): boolean => {
+    for (const room of roomsDataBase.values()) {
+        if (playerId === room.creator) {
+            return true;
         }
     }
 
-    return null;
+    return false;
 };
 
 export const handleCreateRoom = (ws: WebSocket) => {
@@ -25,9 +25,7 @@ export const handleCreateRoom = (ws: WebSocket) => {
         return;
     }
 
-    const isUserAlreadyCreatedRoom = [...roomsDataBase.values()].some(room => room.creator === player.id);
-
-    if (isUserAlreadyCreatedRoom) {
+    if (isPlayerAlreadyCreatedRoom(player.id)) {
         return;
     }
 
@@ -41,11 +39,12 @@ export const handleCreateRoom = (ws: WebSocket) => {
 
     roomsDataBase.set(roomId, newRoom);
 
-    updateRoom();
     sendResponse(ws, COMMANDS.createGame, {
         idGame: newRoom.roomId,
         idPlayer: newRoom.creator,
     });
+
+    updateRoom();
 };
 
 export const updateRoom = (ws?: WebSocket): void => {
@@ -59,9 +58,11 @@ export const updateRoom = (ws?: WebSocket): void => {
     } else {
         onlinePlayersDataBase.forEach(player => sendResponse(player.ws, COMMANDS.updateRoom, responseData));
     }
+
+    logMessage(LogTypeEnum.update, 'Game rooms updated');
 };
 
-const deleteRoomsCreatedByPlayer = (playerId: string): void => {
+export const deleteRoomsCreatedByPlayer = (playerId: string): void => {
     roomsDataBase.forEach(room => {
         if (room.creator === playerId) {
             roomsDataBase.delete(room.roomId);
@@ -79,15 +80,17 @@ export const handleAddUserToRoom = (data: unknown, ws: WebSocket) => {
         return;
     }
 
-    if (room.players[0]?.id === player.id) {
+    const { players: playersInRoom } = room;
+
+    if (playersInRoom[0]?.id === player.id) {
         return;
     }
 
-    room.players.push({ id: player.id, name: player.name, ws });
+    playersInRoom.push({ id: player.id, name: player.name, ws });
 
-    const { gameId } = createGame();
+    const gameId = handleCreateGame(playersInRoom);
 
-    room.players.forEach(player => {
+    playersInRoom.forEach(player => {
         sendResponse(ws, COMMANDS.createGame, {
             idGame: gameId,
             idPlayer: player.id,

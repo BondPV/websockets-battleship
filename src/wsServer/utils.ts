@@ -1,5 +1,6 @@
 import { WebSocket } from 'ws';
 import { ClientRequestType, CommandType } from './types';
+import { OnlinePlayerDataType, onlinePlayersDataBase } from './db/db';
 
 export enum LogTypeEnum {
     error = '❌',
@@ -39,4 +40,14 @@ export const generateID = (prefix = '') => {
     const hash = Math.random().toString(36).slice(-7);
 
     return `${prefix}-${hash}`;
+};
+
+export const findPlayerByWebSocket = (ws: WebSocket): OnlinePlayerDataType | null => {
+    for (const player of onlinePlayersDataBase.values()) {
+        if (player.ws === ws) {
+            return player;
+        }
+    }
+
+    return null;
 };

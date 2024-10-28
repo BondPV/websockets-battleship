@@ -3,21 +3,11 @@ import { createHash } from 'node:crypto';
 import { onlinePlayersDataBase, PlayerRegDataType, playersDataBase } from '../db/db';
 import { PlayerRequestDataType } from '../types';
 import { COMMANDS, MIN_LOGIN_FIELDS_LENGTH } from '../constants';
-import { generateID, sendResponse } from '../utils';
-import { updateRoom } from './roomController';
+import { findPlayerByWebSocket, generateID, logMessage, LogTypeEnum, sendResponse } from '../utils';
+import { deleteRoomsCreatedByPlayer, updateRoom } from './roomController';
 
 const isFieldValid = (fieldContent: string): boolean => {
     return fieldContent.length >= MIN_LOGIN_FIELDS_LENGTH;
-};
-
-const findPlayerByName = (name: string): PlayerRegDataType | null => {
-    for (const player of playersDataBase.values()) {
-        if (player.name === name) {
-            return player;
-        }
-    }
-
-    return null;
 };
 
 const handlePlayerLogin = (player: PlayerRegDataType, password: string, ws: WebSocket) => {
@@ -37,6 +27,8 @@ const handlePlayerLogin = (player: PlayerRegDataType, password: string, ws: WebS
 
     onlinePlayersDataBase.set(id, { id, name, ws });
 
+    logMessage(LogTypeEnum.success, `Player ${name} has login`);
+
     sendResponse(ws, COMMANDS.reg, {
         name,
         index: id,
@@ -55,10 +47,11 @@ export const handlePlayerRegistration = (data: unknown, ws: WebSocket) => {
             error: true,
             errorText: `Player name or password must be at least ${MIN_LOGIN_FIELDS_LENGTH} characters long`,
         });
+
         return;
     }
 
-    const player = findPlayerByName(name);
+    const player = playersDataBase.get(name.toLocaleLowerCase());
 
     if (player) {
         handlePlayerLogin(player, password, ws);
@@ -75,7 +68,7 @@ export const handlePlayerRegistration = (data: unknown, ws: WebSocket) => {
         wins: 0,
     };
 
-    playersDataBase.set(id, newPlayer);
+    playersDataBase.set(name.toLocaleLowerCase(), newPlayer);
     onlinePlayersDataBase.set(id, { id, name, ws });
 
     sendResponse(ws, COMMANDS.reg, {
@@ -85,5 +78,20 @@ export const handlePlayerRegistration = (data: unknown, ws: WebSocket) => {
         errorText: '',
     });
 
+    logMessage(LogTypeEnum.success, `Player ${name} registered`);
+
     updateRoom(ws);
+};
+
+export const handleDisconnectedPlayer = (ws: WebSocket): void => {
+    const player = findPlayerByWebSocket(ws);
+
+    if (!player) {
+        return;
+    }
+
+    onlinePlayersDataBase.delete(player.id);
+
+    deleteRoomsCreatedByPlayer(player.id);
+    updateRoom();
 };

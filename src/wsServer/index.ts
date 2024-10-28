@@ -1,6 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { logMessage, LogTypeEnum, parseClientRequest } from './utils';
-import { handlePlayerRegistration } from './controllers/playerController';
+import { handleDisconnectedPlayer, handlePlayerRegistration } from './controllers/playerController';
 import { ClientRequestType } from './types';
 import { COMMANDS } from './constants';
 import { handleAddUserToRoom, handleCreateRoom } from './controllers/roomController';
@@ -10,7 +10,7 @@ export const createWebSocketServer = (port: number) => {
     const wss = new WebSocketServer({ port });
 
     wss.on('connection', (ws: WebSocket) => {
-        logMessage(LogTypeEnum.success, 'Client connected');
+        logMessage(LogTypeEnum.server, 'Client connected');
 
         ws.on('message', (message: string) => {
             try {
@@ -38,6 +38,7 @@ export const createWebSocketServer = (port: number) => {
         });
 
         ws.on('close', () => {
+            handleDisconnectedPlayer(ws);
             logMessage(LogTypeEnum.exit, 'Client disconnected');
         });
 

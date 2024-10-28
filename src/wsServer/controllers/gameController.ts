@@ -1,6 +1,6 @@
 import { COMMANDS } from '../constants';
-import { GameIdType, gamesDataBase, PlayerIdType } from '../db/db';
-import { addShips, getPlayerInTurn, isGameReady } from '../model/game';
+import { GameIdType, gamesDataBase, OnlinePlayerDataType, PlayerIdType } from '../db/db';
+import { addPlayerToGame, addShips, createGame, getPlayerInTurn, isGameReady } from '../model/game';
 import { ShipInfoType, StartGameResponseDataType } from '../types';
 import { sendResponse } from '../utils';
 
@@ -48,4 +48,18 @@ export const handleAddShips = (data: unknown) => {
             sendResponse(player.ws, COMMANDS.turn, { currentPlayer });
         });
     }
+};
+
+export const handleCreateGame = (players: OnlinePlayerDataType[]) => {
+    const newGame = createGame();
+    const playersInGame = new Map();
+
+    players.forEach(player => {
+        addPlayerToGame(newGame, player.id);
+        playersInGame.set(player.id, player);
+    });
+
+    gamesDataBase.set(newGame.gameId, { game: newGame, players: playersInGame });
+
+    return newGame.gameId;
 };

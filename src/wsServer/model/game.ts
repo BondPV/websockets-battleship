@@ -47,7 +47,7 @@ export const createGame = (): GameStateType => {
     return { gameId, playersStateData, playersQueue };
 };
 
-export const addPlayer = (gameState: GameStateType, playerId: PlayerIdType) => {
+export const addPlayerToGame = (gameState: GameStateType, playerId: PlayerIdType) => {
     gameState.playersQueue.push(playerId);
 };
 
